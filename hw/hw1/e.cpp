@@ -1,122 +1,99 @@
 #pragma comment(linker, "/stack:200000000")
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize ("unroll-loops")
-#pragma GCC target("avx,avx2,fma,sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx")
-#define DIM_I 6
-#define DIM_J 8
+#pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,avx")
 #include <iostream>
+
+static const uint8_t arr[6] = {2, 2, 8, 8, 2, 2};
+static const uint8_t color[6] = {'W', 'O', 'G', 'R', 'B', 'Y'};
 
 class PocketCube 
 {
     friend std::ostream& operator<<(std::ostream&, const PocketCube&);
 public:
-    inline PocketCube();
+    PocketCube();
     inline PocketCube RotateFront();
     inline PocketCube RotateRight();
     inline PocketCube RotateDown();
 private:
-    char cube[DIM_I][DIM_J] = {
-        {'-', '-', 'W', 'W', '-', '-', '-', '-'},
-        {'-', '-', 'W', 'W', '-', '-', '-', '-'},
-        {'O', 'O', 'G', 'G', 'R', 'R', 'B', 'B'},
-        {'O', 'O', 'G', 'G', 'R', 'R', 'B', 'B'},
-        {'-', '-', 'Y', 'Y', '-', '-', '-', '-'},
-        {'-', '-', 'Y', 'Y', '-', '-', '-', '-'}
+    uint8_t cube[24] = {0, 0, 0, 0, 
+        1, 1, 2, 2, 3, 3, 4, 4, 
+        1, 1, 2, 2, 3, 3, 4, 4,
+        5, 5, 5, 5
     };
-    char cpy[6][8];
 };
 
 std::ostream& operator<<(std::ostream& os, const PocketCube& pc) {
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 8; j++) {
-            os << pc.cube[i][j];
+    uint8_t idx = 0;
+    for(uint8_t i = 0; i < 6; i++){
+        if(arr[i] != 8) os << "--";
+        for(uint8_t j = 0; j < arr[i]; j++){
+            os << color[pc.cube[idx++]];
         }
+        if(arr[i] != 8) os << "----";
         os << std::endl;
     }
     return os;
 }
 
-inline PocketCube::PocketCube() {
-    for(int i = 0; i < 6; i++){
-        for(int j = 0; j < 8; j++){
-            cpy[i][j] = cube[i][j];
-        }
-    }
-}
+PocketCube::PocketCube() {}
 
 inline PocketCube PocketCube::RotateFront()  {
-    cube[1][2] = cpy[3][1]; cube[1][3] = cpy[2][1];
-    cube[3][1] = cpy[4][3]; cube[2][1] = cpy[4][2]; 
-    cube[4][3] = cpy[2][4]; cube[4][2] = cpy[3][4];
-    cube[2][4] = cpy[1][2]; cube[3][4] = cpy[1][3];
+    uint8_t tmp1 = cube[2];
 
-    cpy[2][2] = cube[2][2]; cpy[3][2] = cube[3][2];
-    cpy[2][3] = cube[2][3]; cpy[3][3] = cube[3][3];
+    cube[2] = cube[13]; cube[13] = cube[21];
+    cube[21] = cube[8]; cube[8] = tmp1;
 
-    cube[2][2] = cpy[3][2]; cube[2][3] = cpy[2][2];
-    cube[3][2] = cpy[3][3]; cube[3][3] = cpy[2][3];
+    tmp1 = cube[3];
 
-    // copy
+    cube[3] = cube[5]; cube[5] = cube[20];
+    cube[20] = cube[16]; cube[16] = tmp1;
 
-    cpy[1][2] = cube[1][2]; cpy[1][3] = cube[1][3];
-    cpy[3][1] = cube[3][1]; cpy[2][1] = cube[2][1];
-    cpy[4][3] = cube[4][3]; cpy[4][2] = cube[4][2];
-    cpy[2][4] = cube[2][4]; cpy[3][4] = cube[3][4];
+    tmp1 = cube[6];
 
-    cpy[2][2] = cube[2][2]; cpy[3][2] = cube[3][2];
-    cpy[2][3] = cube[2][3]; cpy[3][3] = cube[3][3];
+    cube[6] = cube[14]; cube[14] = cube[15];
+    cube[15] = cube[7]; cube[7] = tmp1;
 
     return *this;
 }
 
 inline PocketCube PocketCube::RotateRight()  {
-    cube[0][3] = cpy[2][3]; cube[1][3] = cpy[3][3];
-    cube[2][3] = cpy[4][3]; cube[3][3] = cpy[5][3];
-    cube[4][3] = cpy[3][6]; cube[5][3] = cpy[2][6];
-    cube[2][6] = cpy[1][3]; cube[3][6] = cpy[0][3];
-    
-    cpy[2][4] = cube[2][4]; cpy[3][4] = cube[3][4];
-    cpy[2][5] = cube[2][5]; cpy[3][5] = cube[3][5];
-    
-    cube[2][4] = cpy[3][4]; cube[2][5] = cpy[2][4];
-    cube[3][4] = cpy[3][5]; cube[3][5] = cpy[2][5];
+    uint8_t tmp1 = cube[1];
 
-    // copy
+    cube[1] = cube[7]; cube[7] = cube[21];
+    cube[21] = cube[18]; cube[18] = tmp1;
 
-    cpy[0][3] = cube[0][3]; cpy[1][3] = cube[1][3];
-    cpy[2][3] = cube[2][3]; cpy[3][3] = cube[3][3];
-    cpy[4][3] = cube[4][3]; cpy[5][3] = cube[5][3];
-    cpy[2][6] = cube[2][6]; cpy[3][6] = cube[3][6];
+    tmp1 = cube[3];
 
-    cpy[2][4] = cube[2][4]; cpy[3][4] = cube[3][4];
-    cpy[2][5] = cube[2][5]; cpy[3][5] = cube[3][5];
+    cube[3] = cube[15]; cube[15] = cube[23];
+    cube[23] = cube[10]; cube[10] = tmp1;
+
+    tmp1 = cube[8];
+
+    cube[8] = cube[16]; cube[16] = cube[17];
+    cube[17] = cube[9]; cube[9] = tmp1;
 
     return *this;
 }
 
 inline PocketCube PocketCube::RotateDown()  {
-    for(int i = 0; i < 8; i++){
-        cube[3][i] = cpy[3][(i - 2 + 8) % 8];
-    }
+    uint8_t tmp1 = cube[12];
 
-    cpy[4][2] = cube[4][2]; cpy[4][3] = cube[4][3];
-    cpy[5][2] = cube[5][2]; cpy[5][3] = cube[5][3];
+    cube[12] = cube[18]; cube[18] = cube[16];
+    cube[16] = cube[14]; cube[14] = tmp1;
 
-    cube[4][2] = cpy[5][2]; cube[4][3] = cpy[4][2];
-    cube[5][2] = cpy[5][3]; cube[5][3] = cpy[4][3];
+    tmp1 = cube[13];
 
-    // copy
+    cube[13] = cube[19]; cube[19] = cube[17];
+    cube[17] = cube[15]; cube[15] = tmp1;
 
-    for(int i = 0; i < 8; i++){
-        cpy[3][i] = cube[3][i];
-    }
+    tmp1 = cube[20];
 
-    cpy[4][2] = cube[4][2]; cpy[4][3] = cube[4][3];
-    cpy[5][2] = cube[5][2]; cpy[5][3] = cube[5][3];
+    cube[20] = cube[22]; cube[22] = cube[23];
+    cube[23] = cube[21]; cube[21] = tmp1;
 
     return *this;
 }
-
 
 #include <iostream>
 #include <random>     // For Test
@@ -162,7 +139,7 @@ void Test1() {
 
 void Test2() { 
     PocketCube a;
-    std::cout << a.RotateDown().RotateFront() << std::endl;
+    std::cout << a.RotateDown().RotateFront().RotateRight() << std::endl;
  }
 void Test3() { /* HIDDEN */ }
 void Test4() { /* HIDDEN */ }
