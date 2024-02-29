@@ -1,15 +1,11 @@
-#pragma comment(linker, "/stack:200000000")
-#pragma GCC optimize("Ofast")
-#pragma GCC target("avx,avx2,fma,sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx")
 #include <iostream>
-#include <algorithm>
 static const int NUM_FACELETS = 24; 
 static const int NUM_COLORS = 6;
 static const int BITS_PER_COLOR = 3;    // 6 colors
 
-static const int arr[6] = {2, 2, 8, 8, 2, 2};
-static const char color[6] = {'W', 'O', 'G', 'R', 'B', 'Y'};
-static const int orig[24] = {0, 0, 0, 0, 
+static const int arr[NUM_COLORS] = {2, 2, 8, 8, 2, 2};
+static const char color[NUM_COLORS] = {'W', 'O', 'G', 'R', 'B', 'Y'};
+static const int orig[NUM_FACELETS] = {0, 0, 0, 0, 
     1, 1, 2, 2, 3, 3, 4, 4, 
     1, 1, 2, 2, 3, 3, 4, 4,
     5, 5, 5, 5
@@ -50,13 +46,13 @@ public:
     PocketCube RotateFront();
     PocketCube RotateRight();
     PocketCube RotateDown();
-    void SetFacelet(int index, __uint128_t color);
+    void SetFacelet(int index, int color);
     int GetFacelet(int index) const;
 private:
     Facelet Cube;
 };
 
-void PocketCube::SetFacelet(int index, __uint128_t color) {
+void PocketCube::SetFacelet(int index, int color) {
     switch(index){
         case 0: Cube.color0 = color; break;
         case 1: Cube.color1 = color; break;
