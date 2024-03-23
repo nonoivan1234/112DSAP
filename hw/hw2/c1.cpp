@@ -212,14 +212,24 @@ void Test5() { /* HIDDEN */ }
 
 template<typename TKey, typename TValue>
 void Dictionary<TKey, TValue>::RemoveKey(const TKey& key) {
-    repr_.erase(std::remove_if(std::begin(repr_), std::end(repr_), [&key](const auto& p) { return p.key == key; }),
-                std::end(repr_));
+    for(auto it = repr_.begin(); it != repr_.end(); ) {
+        if(it->key == key) {
+            it = repr_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 template<typename TKey, typename TValue>
 void Dictionary<TKey, TValue>::RemoveValue(const TValue& value) {
-    repr_.erase(std::remove_if(std::begin(repr_), std::end(repr_), [&value](const auto& p) { return p.value == value; }),
-                std::end(repr_));
+    for(auto it = repr_.begin(); it != repr_.end(); ) {
+        if(it->value == value) {
+            it = repr_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 template<typename TKey, typename TValue>
@@ -229,7 +239,12 @@ void Dictionary<TKey, TValue>::Swap(Dictionary<TKey, TValue>& other) {
 
 template<typename TKey, typename TValue>
 bool Dictionary<TKey, TValue>::Contains(const TKey& key) const {
-    return std::find_if(std::begin(repr_), std::end(repr_), [&key](const auto& p) { return p.key == key; }) != std::end(repr_);
+    for(const auto& p : repr_) {
+        if(p.key == key) {
+            return true;
+        }
+    }
+    return false;
 }
 
 template<typename TKey, typename TValue>
