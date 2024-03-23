@@ -649,23 +649,55 @@ void List<T>::Reverse() {
     head_ = prev;
 }
 
-#include<algorithm>
+template<typename T>
+void Split(ListNode<T>* head, ListNode<T>** front, ListNode<T>** back) {
+    ListNode<T>* slow = head;
+    ListNode<T>* fast = head->next;
+    while (fast != nullptr) {
+        fast = fast->next;
+        if (fast != nullptr) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+    }
+    *front = head;
+    *back = slow->next;
+    slow->next = nullptr;
+}
+
+template<typename T>
+ListNode<T>* Merge(ListNode<T>* a, ListNode<T>* b) {
+    if (a == nullptr)   return b;
+    if (b == nullptr)   return a;
+
+    ListNode<T>* result = nullptr;
+
+    if (a->val <= b->val) {
+        result = a;
+        result->next = Merge(a->next, b);
+    } else {
+        result = b;
+        result->next = Merge(a, b->next);
+    }
+
+    return result;
+}
+
+template<typename T>
+void MergeSort(ListNode<T>** head) {
+    ListNode<T>* h = *head;
+    if (h == nullptr || h->next == nullptr) {
+        return;
+    }
+    ListNode<T>* a;
+    ListNode<T>* b;
+    Split(h, &a, &b);
+    MergeSort(&a);
+    MergeSort(&b);
+    *head = Merge(a, b);
+}
 
 template<typename T>
 void List<T>::Sort() {
-    size_t n = Size();
-    T* temp = new T[n];
-    size_t i = 0;
-    for (auto p = begin(); p != end(); ++p) {
-        temp[i++] = *p;
-    }
-
-    std::sort(temp, temp + n);
-
-    i = 0;
-    for (auto p = begin(); p != end(); ++p) {
-        *p = temp[i++];
-    }
-    delete[] temp;
-    temp = nullptr;
+    MergeSort(&head_);
 }
