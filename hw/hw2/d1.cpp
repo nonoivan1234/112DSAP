@@ -1,13 +1,17 @@
 #include<bits/stdc++.h>
+#pragma comment(linker, "/stack:200000000")
+#pragma GCC optimize("Ofast")
+#pragma GCC optimize ("unroll-loops")
+#pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,avx,tune=native")
 using namespace std;
 #define nono_is_handsome cin.tie(0); ios_base::sync_with_stdio(0);
 #define int long long
-const int Field = 30;
+const int Field = 40;
 const int Row = 1005;
-const int Error = -1e9;
+const int Error = 1e9;
 const int Max = 10000000;
 typedef struct Data{
-    int type;   // 0: string, 1: int, 2: equation, 3: bool
+    char type = -1;   // 0: string, 1: int, 2: equation, 3: bool
     int data;
     int field;
     int row;
@@ -19,33 +23,40 @@ public:
     CSVreader(){
         field = 0;
         row = 0;
+        memset(vis, 0, sizeof(vis));
     }
     void ReadLine(string line);
-    void PraseData();
+    void ParseData();
     void PrintData();
+    void Parse(int row, int field, string str);
     int GetVal(Data &d);
 private:
-    Data data[Field][Row];
-    bool vis[Field][Row];
+    Data data[Row][Field];
+    bool vis[Row][Field];
     int field;
-    int row = 0;
+    int row;
 };
 
-Data Prase(string str){
+void CSVreader::Parse(int row, int field, string str){
     Data tmp;
     if(str[0] == '#'){
         tmp.type = 0;
         tmp.str = str.substr(1);
+        tmp.data = Error;
     }
     else if(str[0] == '='){
         tmp.type = 2;
         tmp.str = str.substr(1);
+        tmp.data = Error;
     }
     else{
         tmp.type = 1;
         tmp.data = stoi(str);
     }
-    return tmp;
+
+    tmp.field = field;
+    tmp.row = row;
+    data[row][field] = tmp;
 }
 
 void CSVreader::ReadLine(string line){
@@ -53,12 +64,14 @@ void CSVreader::ReadLine(string line){
     string tmp;
     field = 0;
     while(getline(ss, tmp, ',')){
-        data[row][field] = Prase(tmp);
-        data[row][field].row = row;
-        data[row][field].field = field;
+        Parse(row, field, tmp);
         field++;
     }
     row++;
+}
+
+bool issign(char c){
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '>' || c == '<';
 }
 
 int CSVreader::GetVal(Data &d){
@@ -68,6 +81,7 @@ int CSVreader::GetVal(Data &d){
 
     if(d.type == 1) return d.data;
     if(d.type == 0) return d.data = Error;
+    if(d.type == 3) return Error;
     if(vis[d.row][d.field]) return d.data = Error;
 
     int x = 1, y = 1, n = d.str.length();
@@ -78,7 +92,7 @@ int CSVreader::GetVal(Data &d){
         x = -1; idx++;
     }
 
-    while(d.str[idx] != '+' && d.str[idx] != '-' && d.str[idx] != '*' && d.str[idx] != '/' && d.str[idx] != '>' && d.str[idx] != '<' && idx < n){
+    while(idx < n && !issign(d.str[idx])){
         s1 += d.str[idx];
         idx++;
     }
@@ -116,6 +130,8 @@ int CSVreader::GetVal(Data &d){
         y *= GetVal(a);
     }
 
+    if(abs(x) > Max || abs(y) > Max)    return d.data = Error;
+
     vis[d.row][d.field] = 0;
 
     if(op == '+'){
@@ -145,11 +161,11 @@ int CSVreader::GetVal(Data &d){
     return d.data = Error;
 }
 
-void CSVreader::PraseData(){
+void CSVreader::ParseData(){
     for(int i = 0; i < row; i++){
         for(int j = 0; j < field; j++){
             if(data[i][j].type == 2){
-                data[i][j].data = GetVal(data[i][j]);
+                GetVal(data[i][j]);
             }
         }
     }
@@ -168,7 +184,7 @@ void CSVreader::PrintData(){
                 cout << (data[i][j].data ? "true" : "false");
             }
             else{
-                if((data[i][j].data) == Error)    cout << "ERROR";
+                if(abs(data[i][j].data) == Error)    cout << "ERROR";
                 else cout << data[i][j].data;
             }
             if(j != field - 1)  cout << ",";
@@ -186,6 +202,8 @@ signed main(){
         reader.ReadLine(tmp);
     }
 
-    reader.PraseData();
+    reader.ParseData();
     reader.PrintData();
+
+    return 0;
 }
