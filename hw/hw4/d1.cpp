@@ -11,111 +11,31 @@ struct IStringDatabase {
     virtual ~IStringDatabase() {}
 };
 
-#include <unordered_set>
-#include <unordered_map>
 
-class TrieNode {
-public:
-    std::unordered_map<char, TrieNode*> children;
-    bool isEndOfWord;
-
-    TrieNode() {
-        isEndOfWord = false;
-    }
-};
-
+#include <set>
 class StringDatabase : public IStringDatabase {
-private:
-    TrieNode* root;
-
 public:
-    StringDatabase() {
-        root = new TrieNode();
-    }
-
     void Add(const std::string& str) override {
-        TrieNode* curr = root;
-        for (char c : str) {
-            if (curr->children.find(c) == curr->children.end()) {
-                curr->children[c] = new TrieNode();
-            }
-            curr = curr->children[c];
-        }
-        curr->isEndOfWord = true;
+        data.insert(str);
     }
 
     bool Remove(const std::string& str) override {
-        TrieNode* curr = root;
-        std::unordered_set<TrieNode*> nodesToDelete;
-        for (char c : str) {
-            if (curr->children.find(c) == curr->children.end()) {
-                return false;
-            }
-            curr = curr->children[c];
-            nodesToDelete.insert(curr);
-        }
-        if (!curr->isEndOfWord) {
-            return false;
-        }
-        curr->isEndOfWord = false;
-
-        // Remove nodes that are not part of any other word
-        for (int i = str.size() - 1; i >= 0; --i) {
-            curr = root;
-            for (int j = 0; j < i; ++j) {
-                curr = curr->children[str[j]];
-                nodesToDelete.erase(curr);
-            }
-            curr->children.erase(str[i]);
-            if (curr->children.size() > 0) {
-                break;
-            }
-        }
-
-        // Delete the nodes that are not part of any other word
-        for (auto node : nodesToDelete) {
-            delete node;
-        }
-
-        return true;
+        return data.erase(str) > 0;
     }
 
     std::vector<std::string> StartsWith(const std::string& prefix) override {
+        auto it = data.lower_bound(prefix);
         std::vector<std::string> result;
-        TrieNode* curr = root;
-        for (char c : prefix) {
-            if (curr->children.find(c) == curr->children.end()) {
-                return result;
-            }
-            curr = curr->children[c];
+        while (it != data.end() && it->find(prefix) == 0) {
+            result.push_back(*it);
+            ++it;
         }
-        TraverseTrie(curr, prefix, result);
-        std::sort(result.begin(), result.end());
+
         return result;
     }
 
-    void TraverseTrie(TrieNode* node, std::string prefix, std::vector<std::string>& result) {
-        if (node->isEndOfWord) {
-            result.push_back(prefix);
-        }
-        for (auto& child : node->children) {
-            TraverseTrie(child.second, prefix + child.first, result);
-        }
-    }
-
-    ~StringDatabase() {
-        DeleteTrie(root);
-    }
-
-    void DeleteTrie(TrieNode* node) {
-        if (node == nullptr) {
-            return;
-        }
-        for (auto& child : node->children) {
-            DeleteTrie(child.second);
-        }
-        delete node;
-    }
+private:
+    std::set<std::string> data;
 };
 
 
