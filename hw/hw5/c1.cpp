@@ -13,11 +13,11 @@ struct IMetro {
 };
 
 // [YOUR CODE WILL BE PLACED HERE] 
-#include <bits/stdc++.h>
 
+#include<bits/stdc++.h>
 class Metro : public IMetro {
 private:
-    std::unordered_map<std::string, std::set<std::string>> connections;
+    std::map<std::string, std::set<std::string>> connections;
 
 public:
     void AddConnection(std::string station_name_a, std::string station_name_b) override {
@@ -26,49 +26,31 @@ public:
     }
 
     bool IsConnected(std::string station_name_a, std::string station_name_b) override {
-        return connections[station_name_a].count(station_name_b) > 0;
+        auto it = connections.find(station_name_a);
+        if (it != connections.end()) {
+            return std::find(it->second.begin(), it->second.end(), station_name_b) != it->second.end();
+        }
+        return false;
     }
 
     bool HasPath(std::string station_name_a, std::string station_name_b) override {
-        if (station_name_a == station_name_b) {
-            return true;
-        }
+        if (station_name_a == station_name_b) return true;
 
-        std::unordered_map<std::string, bool> visited_a;
-        std::unordered_map<std::string, bool> visited_b;
-        std::queue<std::string> q_a;
-        std::queue<std::string> q_b;
-        q_a.push(station_name_a);
-        q_b.push(station_name_b);
+        std::unordered_set<std::string> visited;
+        std::vector<std::string> queue;
 
-        while (!q_a.empty() && !q_b.empty()) {
-            std::string current_station_a = q_a.front();
-            std::string current_station_b = q_b.front();
-            q_a.pop();
-            q_b.pop();
+        visited.insert(station_name_a);
+        queue.push_back(station_name_a);
 
-            visited_a[current_station_a] = true;
-            visited_b[current_station_b] = true;
+        while (!queue.empty()) {
+            std::string current = queue.front();
+            queue.erase(queue.begin());
 
-            if (current_station_a == current_station_b) {
-                return true;
-            }
-
-            for (const std::string& neighbor_a : connections[current_station_a]) {
-                if (visited_b.count(neighbor_a) > 0) {
-                    return true;
-                }
-                if (!visited_a[neighbor_a]) {
-                    q_a.push(neighbor_a);
-                }
-            }
-
-            for (const std::string& neighbor_b : connections[current_station_b]) {
-                if (visited_a.count(neighbor_b) > 0) {
-                    return true;
-                }
-                if (!visited_b[neighbor_b]) {
-                    q_b.push(neighbor_b);
+            for (const auto& neighbor : connections[current]) {
+                if (neighbor == station_name_b) return true;
+                if (visited.find(neighbor) == visited.end()) {
+                    visited.insert(neighbor);
+                    queue.push_back(neighbor);
                 }
             }
         }
@@ -77,46 +59,46 @@ public:
     }
 
     std::vector<std::string> ShortestPath(std::string station_name_a, std::string station_name_b) override {
-        std::unordered_map<std::string, std::string> prev;
-        std::unordered_map<std::string, int> dist;
-        std::queue<std::string> q;
-        q.push(station_name_a);
-        dist[station_name_a] = 0;
-        prev[station_name_a] = "";
+        if (station_name_a == station_name_b) return {station_name_a};
 
-        while (!q.empty()) {
-            std::string current_station = q.front();
-            q.pop();
+        std::unordered_map<std::string, std::string> previous;
+        std::unordered_set<std::string> visited;
+        std::vector<std::string> queue;
 
-            if (current_station == station_name_b) {
-                break;
-            }
-            
-            for (const std::string& neighbor : connections[current_station]) {
-                if (dist.count(neighbor) == 0) {
-                    dist[neighbor] = dist[current_station] + 1;
-                    prev[neighbor] = current_station;
-                    q.push(neighbor);
+        visited.insert(station_name_a);
+        queue.push_back(station_name_a);
+
+        while (!queue.empty()) {
+            std::string current = queue.front();
+            queue.erase(queue.begin());
+
+            for (const auto& neighbor : connections[current]) {
+                // std::cout << neighbor << std::endl;
+                if (neighbor == station_name_b) {
+                    previous[neighbor] = current;
+                    std::vector<std::string> path;
+                    std::string temp = station_name_b;
+                    while (temp != station_name_a) {
+                        path.push_back(temp);
+                        temp = previous[temp];
+                    }
+                    path.push_back(station_name_a);
+                    std::reverse(path.begin(), path.end());
+                    return path;
+                }
+                if (visited.find(neighbor) == visited.end()) {
+                    visited.insert(neighbor);
+                    queue.push_back(neighbor);
+                    previous[neighbor] = current;
                 }
             }
+            // std::cout << "\n";
         }
 
-        std::vector<std::string> path;
-        if (dist.count(station_name_b) == 0) {
-            return path;
-        }
-
-        std::string current = station_name_b;
-        while (current != "") {
-            path.push_back(current);
-            current = prev[current];
-        }
-
-        std::reverse(path.begin(), path.end());
-        return path;
-    
+        return {}; // No path found
     }
 };
+
 
 void Dump(const std::vector<std::string>&);
 
@@ -206,7 +188,34 @@ void Test1() {
     Dump(m.ShortestPath("TaipeiMainStation", "Beimen"));
 }
 
-void Test2() {}
+void Test2() {
+    Metro m;
+    m.AddConnection("TaipeiMainStation", "ShandoTemple");
+    m.AddConnection("TaipeiMainStation", "Zhongshan");
+    m.AddConnection("TaipeiMainStation", "Ximen");
+    m.AddConnection("Shuanglian", "Zhongshan");
+    m.AddConnection("Beimen", "Zhongshan");
+    m.AddConnection("Beimen", "Ximen");
+    m.AddConnection("MinquanWRd", "Shuanglian");
+    m.AddConnection("MinquanWRd", "Yuanshan");
+    m.AddConnection("MinquanWRd", "ZhongshangElementarySchool");
+    m.AddConnection("XingtianTample", "ZhongshangElementarySchool");
+    m.AddConnection("XingtianTample", "SongjianNanjing");
+    m.AddConnection("ZhongxiaoXinsheng", "SongjianNanjing");
+    m.AddConnection("ZhongxiaoXinsheng", "Dongmen");
+    m.AddConnection("ShandoTemple", "ZhongxiaoXinsheng");
+    m.AddConnection("ZhongxiaoXinsheng", "ZhongxiaoFuxing");
+    m.AddConnection("ZhongxiaoFuxing", "SunYatSenMemorialHall");
+    m.AddConnection("SunYatSenMemorialHall", "TaipeiCityHall");
+    m.AddConnection("TaipeiCityHall", "Yongchun");
+    m.AddConnection("Yongchun", "Houshanpi");
+    m.AddConnection("Houshanpi", "Kunyang");
+    m.AddConnection("Kunyang", "Nanggong");
+
+
+    std::cout << "11) ";
+    Dump(m.ShortestPath("TaipeiMainStation", "Beimen"));
+}
 void Test3() {}
 void Test4() {}
 void Test5() {}

@@ -132,15 +132,10 @@ void Test6() { /* HIDDEN */ }
 void Test7() { /* HIDDEN */ }
 
 // [YOUR CODE WILL BE PLACED HERE]
-#include <map>
-
-long long makeHash(BookId bookid, StoreId StoreId){
-    return (long long)bookid * 1000000 + StoreId;
-}
-
-std::pair<BookId, StoreId> splitHash(long long hash){
-    return {hash / 1000000, hash % 1000000};
-}
+#include <bits/stdc++.h>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
 
 bool cmp(const Stock& a, const Stock& b) {
     if (a.price != b.price) return a.price < b.price;
@@ -148,58 +143,73 @@ bool cmp(const Stock& a, const Stock& b) {
     return a.storeId < b.storeId;
 }
 
+long long makeHash(BookId bookId, StoreId storeId) {
+    return static_cast<long long>(bookId) * 1000000 + storeId;
+}
+
+std::pair<BookId, StoreId> splitHash(long long hash) {
+    return { hash / 1000000, hash % 1000000 };
+}
+
 class BookStores : public IBookStores {
 public:
     void Initialize(const std::vector<Stock>& stocks) override {
-        stocks_ = stocks;
+        for (const auto& stock : stocks) {
+            unrentedStocks[stock.bookId].push_back(stock);
+        }
     }
 
     std::vector<Stock> SearchUnrentedStocksOrderdByPrice(BookId bookId, std::size_t maxCount = 10) const override {
-        std::vector<Stock> res;
-        for (const auto& stock : stocks_) {
-            if (stock.bookId == bookId) {
-                res.push_back(stock);
-            }
-        }
-        std::sort(res.begin(), res.end(), cmp);
-        if (maxCount == -1 || maxCount > res.size()) return res;
+        auto it = unrentedStocks.find(bookId);
+        if (it == unrentedStocks.end()) return {}; // No unrented stocks for the given bookId
 
-        return std::vector<Stock>(res.begin(), res.begin() + maxCount);
+        std::vector<Stock> res = it->second;
+        std::sort(res.begin(), res.end(), cmp);
+        
+        if (maxCount != static_cast<std::size_t>(-1) && maxCount < res.size()) {
+            res.resize(maxCount);
+        }
+        return res;
     }
 
     void Rent(BookId bookId, StoreId storeId) override {
-        for (auto it = stocks_.begin(); it != stocks_.end(); ++it) {
-            if (it->bookId == bookId && it->storeId == storeId) {
-                rentedStocks_[makeHash(bookId, storeId)] = *it;
-                stocks_.erase(it);
-                return;
-            }
+        auto& stocks = unrentedStocks[bookId];
+        auto it = std::find_if(stocks.begin(), stocks.end(),
+            [storeId](const Stock& s) { return s.storeId == storeId; });
+        
+        if (it != stocks.end()) {
+            rentedStocks[makeHash(bookId, storeId)] = *it;
+            stocks.erase(it);
         }
     }
 
     void Return(BookId bookId, StoreId storeId) override {
-        auto it = rentedStocks_.find(makeHash(bookId, storeId));
-        if (it != rentedStocks_.end()) {
-            stocks_.push_back(it->second);
-            rentedStocks_.erase(it);
+        long long hash = makeHash(bookId, storeId);
+        auto it = rentedStocks.find(hash);
+        if (it != rentedStocks.end()) {
+            unrentedStocks[bookId].push_back(it->second);
+            rentedStocks.erase(it);
         }
     }
 
     std::vector<Stock> ListRentedStocksOrderedByPrice(std::size_t maxCount = 10) const override {
         std::vector<Stock> res;
-        for (const auto& [_, stock] : rentedStocks_) {
+        for (const auto& [_, stock] : rentedStocks) {
             res.push_back(stock);
         }
         std::sort(res.begin(), res.end(), cmp);
-
-        if (maxCount == -1 || maxCount > res.size()) return res;
-        return std::vector<Stock>(res.begin(), res.begin() + maxCount);
+        
+        if (maxCount != static_cast<std::size_t>(-1) && maxCount < res.size()) {
+            res.resize(maxCount);
+        }
+        return res;
     }
 
 private:
-    std::vector<Stock> stocks_;
-    std::map< long long, Stock> rentedStocks_;
+    std::unordered_map<BookId, std::vector<Stock>> unrentedStocks;
+    std::unordered_map<long long, Stock> rentedStocks;
 };
+
 
 std::unique_ptr<IBookStores> CreateBookStores() {
     return std::make_unique<BookStores>();
