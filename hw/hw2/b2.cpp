@@ -389,16 +389,16 @@ void Set<T>::Remove(const T& val) {
         return;
     }
     auto* cur = head_;
-    while (cur->next != nullptr && cur->next->val != val) {
+    while(cur->next != nullptr){
+        if (cur->next->val == val) {
+            auto* toDeleted = cur->next;
+            cur->next = cur->next->next;
+            delete toDeleted;
+            --size_;
+            return;
+        }
         cur = cur->next;
     }
-    if (cur->next == nullptr) {
-        return;
-    }
-    auto* toDeleted = cur->next;
-    cur->next = cur->next->next;
-    delete toDeleted;
-    --size_;
 }
 
 template<typename T>

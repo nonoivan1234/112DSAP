@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "scoped_allocator": "cpp"
+    }
+}
