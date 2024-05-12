@@ -213,20 +213,12 @@ void FibonacciCallStackIterator::MoveNext() {
                     state.status = FibonacciCallStatus::kFinished;
                 }
             } else{
-                FibonacciCallState left;
-                left.return_value = 0;
-                left.n = state.n - 1;
-                left.status = FibonacciCallStatus::kEntering;
-                current_.push(left);
+                current_.push({state.n - 1, FibonacciCallStatus::kEntering, 0});
                 state.status = FibonacciCallStatus::kLeftReturned;
             }
             break;
         case FibonacciCallStatus::kLeftReturned:
-            FibonacciCallState right;
-            right.n = state.n - 2;
-            right.return_value = 0;
-            right.status = FibonacciCallStatus::kEntering;
-            current_.push(right);
+            current_.push({state.n - 2, FibonacciCallStatus::kEntering, 0});
             state.status = FibonacciCallStatus::kRightReturned;
             break;
         case FibonacciCallStatus::kRightReturned:
